@@ -10,6 +10,9 @@ app.post('/upload', upload.single('pdf'), (req, res) => {
   res.send(`PDF received: ${req.file.originalname}`);
 });
 
+// ✅ Add this line for Render health check
+app.get('/healthz', (req, res) => res.sendStatus(200));
+
 app.listen(10000, '0.0.0.0', () => {
   console.log('Server is live on port 10000');
 });
