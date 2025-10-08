@@ -3,38 +3,169 @@
 <head>
   <meta charset="UTF-8" />
   <title>PDF to Handwriting Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: #f0f0f0;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      overflow-x: hidden;
     }
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: #fff;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    .page {
+      display: none;
+      padding: 40px;
       text-align: center;
+      animation: fadeIn 1s ease-in-out;
     }
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
+    .active {
+      display: block;
     }
-    input[type="file"], button {
+    .box {
+      background: white;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      max-width: 400px;
+      animation: slideUp 0.8s ease;
+    }
+    input[type="file"], input[type="text"], button {
       width: 100%;
       padding: 12px;
-      margin-bottom: 15px;
+      margin-top: 15px;
       font-size: 16px;
-      border: 1px solid #ccc;
       border-radius: 6px;
+      border: 1px solid #ccc;
     }
     button {
       background-color: #007bff;
       color: white;
       cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #333;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    #preview {
+      margin-top: 20px;
+      font-style: italic;
+      color: #444;
+    }
+    #imagePreview {
+      margin-top: 10px;
+      max-width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page 1: Login -->
+  <div class="page active" id="page1">
+    <div class="box">
+      <h2>🔐 Login Page</h2>
+      <input type="text" id="username" placeholder="Enter your name" />
+      <button onclick="nextPage(2)">Login</button>
+    </div>
+  </div>
+
+  <!-- Page 2: Choose Any File -->
+  <div class="page" id="page2">
+    <div class="box">
+      <h2>📁 Choose a File</h2>
+      <input type="file" id="fileInput" />
+      <button onclick="nextPage(3)">Next</button>
+    </div>
+  </div>
+
+  <!-- Page 3: Choose Handwriting Image -->
+  <div class="page" id="page3">
+    <div class="box">
+      <h2>🖋️ Choose Handwriting Image</h2>
+      <label for="handwritingInput">📷 Take a photo or choose handwriting image</label>
+      <input type="file" id="handwritingInput" accept="image/*" capture="environment" />
+      <img id="imagePreview" src="" alt="Preview" style="display:none;" />
+      <button onclick="startConversion()">Convert</button>
+    </div>
+  </div>
+
+  <!-- Page 4: Conversion Preview -->
+  <div class="page" id="page4">
+    <div class="box">
+      <h2>✅ Conversion Complete</h2>
+      <div id="preview"></div>
+      <button onclick="downloadPDF()">Download PDF</button>
+      <button onclick="nextPage(5)">Logout</button>
+    </div>
+  </div>
+
+  <!-- Page 5: Logout -->
+  <div class="page" id="page5">
+    <div class="box">
+      <h2>👋 Logged Out</h2>
+      <p>Thank you, <span id="userDisplay"></span>!</p>
+    </div>
+  </div>
+
+  <script>
+    function nextPage(n) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page' + n).classList.add('active');
+
+      if (n === 5) {
+        const name = document.getElementById('username').value || 'User';
+        document.getElementById('userDisplay').textContent = name;
+      }
+    }
+
+    document.getElementById('handwritingInput').addEventListener('change', function () {
+      const file = this.files[0];
+      const preview = document.getElementById('imagePreview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function startConversion() {
+      const file = document.getElementById('fileInput').files[0];
+      const handwriting = document.getElementById('handwritingInput').files[0];
+      const preview = document.getElementById('preview');
+
+      if (!file || !handwriting) {
+        alert("Please select both a file and handwriting image.");
+        return;
+      }
+
+      nextPage(4);
+      preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
+    }
+
+    function downloadPDF() {
+      alert("📝 Final PDF download will be available once backend is connected.");
+    }
+  </script>
+</body>
+</html>      cursor: pointer;
     }
     button:hover {
       background-color: #0056b3;
