@@ -33,7 +33,11 @@ app.post('/upload', multiUpload, async (req, res) => {
       converted.pipe(stream);
 
       stream.on('finish', () => {
-        res.download(outputPath, 'handwritten.pdf', (err) => {
+        // Set headers to force download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=handwritten.pdf');
+
+        res.sendFile(outputPath, (err) => {
           // Cleanup files after sending
           try {
             fs.unlinkSync(pdfFile.path);
