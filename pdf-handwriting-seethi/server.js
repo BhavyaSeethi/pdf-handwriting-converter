@@ -1,4 +1,4 @@
-constconst express = require('express');
+const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -10,7 +10,7 @@ const app = express();
 const upload = multer({ dest: 'uploads/' });
 const multiUpload = upload.fields([
   { name: 'file', maxCount: 1 },
-  { name: 'handwriting', maxCount: 1 } // optional, for future style reference
+  { name: 'handwriting', maxCount: 1 }
 ]);
 
 app.post('/upload', multiUpload, async (req, res) => {
@@ -24,9 +24,9 @@ app.post('/upload', multiUpload, async (req, res) => {
   try {
     const dataBuffer = fs.readFileSync(pdfFile.path);
     const pdfData = await pdfParse(dataBuffer);
-    const extractedText = pdfData.text;
+    const extractedText = pdfData.text || '';
 
-    // Load handwriting images into memory
+    // Load handwriting images
     const charImages = {};
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (const char of chars) {
@@ -36,9 +36,9 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    // Create PDF in memory
+    // Create PDF
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595, 842]); // A4
+    const page = pdfDoc.addPage([595, 842]); // A4 size
     let x = 50, y = 750;
 
     for (const char of extractedText) {
@@ -47,6 +47,7 @@ app.post('/upload', multiUpload, async (req, res) => {
         x = 50;
         continue;
       }
+
       const imgBuffer = charImages[char];
       if (imgBuffer) {
         const img = await pdfDoc.embedPng(imgBuffer);
@@ -56,17 +57,19 @@ app.post('/upload', multiUpload, async (req, res) => {
           y -= 50;
           x = 50;
         }
+      } else {
+        // Optional: skip unknown characters or add fallback
+        x += 20;
       }
     }
 
     const finalPdfBuffer = await pdfDoc.save();
 
-    // Send file directly from memory
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=handwritten.pdf');
     res.send(finalPdfBuffer);
 
-    // Cleanup uploaded files
+    // Cleanup
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
   } catch (err) {
