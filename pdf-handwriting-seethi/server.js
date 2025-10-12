@@ -58,7 +58,7 @@ app.post('/upload', multiUpload, async (req, res) => {
           x = 50;
         }
       } else {
-        // Optional: skip unknown characters or add fallback
+        // Optional: skip unknown characters or add fallback spacing
         x += 20;
       }
     }
