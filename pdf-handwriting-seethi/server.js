@@ -1,4 +1,4 @@
-const express = require('express');
+constconst express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -26,7 +26,7 @@ app.post('/upload', multiUpload, async (req, res) => {
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text;
 
-    // Load handwriting images
+    // Load handwriting images into memory
     const charImages = {};
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (const char of chars) {
@@ -36,7 +36,7 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    // Create new PDF
+    // Create PDF in memory
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595, 842]); // A4
     let x = 50, y = 750;
@@ -59,56 +59,24 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    const finalPdf = await pdfDoc.save();
-    const outputPath = path.join(__dirname, 'output.pdf');
-    fs.writeFileSync(outputPath, finalPdf);
+    const finalPdfBuffer = await pdfDoc.save();
 
+    // Send file directly from memory
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=handwritten.pdf');
-    res.sendFile(outputPath, (err) => {
-      try {
-        fs.unlinkSync(pdfFile.path);
-        fs.unlinkSync(handwritingImage.path);
-        fs.unlinkSync(outputPath);
-      } catch (cleanupErr) {
-        console.error('Cleanup error:', cleanupErr);
-      }
-    });
+    res.send(finalPdfBuffer);
+
+    // Cleanup uploaded files
+    fs.unlink(pdfFile.path, () => {});
+    fs.unlink(handwritingImage.path, () => {});
   } catch (err) {
-    console.error('Processing error:', err);
+    console.error('❌ Processing error:', err);
     res.status(500).send('❌ Error processing PDF');
   }
 });
 
 app.get('/healthz', (req, res) => res.sendStatus(200));
 
-app.listen(10000, '0.0.0.0', () => {
-  console.log('🚀 Server is live on port 10000');
-})        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=handwritten.pdf');
-
-        res.sendFile(outputPath, (err) => {
-          // Cleanup files after sending
-          try {
-            fs.unlinkSync(pdfFile.path);
-            fs.unlinkSync(handwritingImage.path);
-            fs.unlinkSync(outputPath);
-          } catch (cleanupErr) {
-            console.error('Cleanup error:', cleanupErr);
-          }
-        });
-      });
-    });
-  } catch (err) {
-    console.error('Processing error:', err);
-    res.status(500).send('❌ Error processing PDF');
-  }
-});
-
-// Health check for Render
-app.get('/healthz', (req, res) => res.sendStatus(200));
-
-// Start server
 app.listen(10000, '0.0.0.0', () => {
   console.log('🚀 Server is live on port 10000');
 });
