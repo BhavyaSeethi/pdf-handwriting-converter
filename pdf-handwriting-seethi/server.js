@@ -31,8 +31,10 @@ app.post('/upload', multiUpload, async (req, res) => {
     // Load handwriting images
     const charImages = {};
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const handwritingDir = path.join(__dirname, 'handwriting');
+
     for (const char of chars) {
-      const imgPath = path.join(__dirname, 'handwriting', `${char}.png`);
+      const imgPath = path.join(handwritingDir, `${char}.png`);
       if (fs.existsSync(imgPath)) {
         charImages[char] = await sharp(imgPath).resize(30, 40).png().toBuffer();
       }
@@ -62,6 +64,13 @@ app.post('/upload', multiUpload, async (req, res) => {
       } else {
         x += 20;
       }
+
+      // Prevent drawing off the page
+      if (y < 50) {
+        y = 750;
+        x = 50;
+        pdfDoc.addPage([595, 842]);
+      }
     }
 
     const finalPdfBuffer = await pdfDoc.save();
@@ -73,6 +82,7 @@ app.post('/upload', multiUpload, async (req, res) => {
       downloadUrl: '/handwritten.pdf'
     });
 
+    // Clean up uploaded files
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
   } catch (err) {
