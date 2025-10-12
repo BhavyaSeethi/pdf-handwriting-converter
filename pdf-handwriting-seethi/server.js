@@ -13,12 +13,14 @@ const multiUpload = upload.fields([
   { name: 'handwriting', maxCount: 1 }
 ]);
 
+app.use(express.static('public')); // Serve static files
+
 app.post('/upload', multiUpload, async (req, res) => {
   const pdfFile = req.files?.file?.[0];
   const handwritingImage = req.files?.handwriting?.[0];
 
   if (!pdfFile || !handwritingImage) {
-    return res.status(400).send('❌ Missing file or handwriting image');
+    return res.status(400).json({ success: false, error: 'Missing file or handwriting image' });
   }
 
   try {
@@ -58,23 +60,24 @@ app.post('/upload', multiUpload, async (req, res) => {
           x = 50;
         }
       } else {
-        // Optional: skip unknown characters or add fallback spacing
         x += 20;
       }
     }
 
     const finalPdfBuffer = await pdfDoc.save();
+    const outputPath = path.join(__dirname, 'public', 'handwritten.pdf');
+    fs.writeFileSync(outputPath, finalPdfBuffer);
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=handwritten.pdf');
-    res.send(finalPdfBuffer);
+    res.status(200).json({
+      success: true,
+      downloadUrl: '/handwritten.pdf'
+    });
 
-    // Cleanup
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
   } catch (err) {
     console.error('❌ Processing error:', err);
-    res.status(500).send('❌ Error processing PDF');
+    res.status(500).json({ success: false, error: 'Error processing PDF' });
   }
 });
 
