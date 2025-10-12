@@ -71,6 +71,30 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
+    #spinner {
+      display: none;
+      margin: 20px auto;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #output {
+      margin-top: 20px;
+      font-style: italic;
+      color: #444;
+      opacity: 0;
+      transition: opacity 1s ease-in;
+    }
+    #output.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -84,11 +108,11 @@
     </div>
   </div>
 
-  <!-- Page 2: Choose Any File -->
+  <!-- Page 2: Choose PDF -->
   <div class="page" id="page2">
     <div class="box">
-      <h2>📁 Choose a File</h2>
-      <input type="file" id="fileInput" />
+      <h2>📁 Choose a PDF File</h2>
+      <input type="file" id="fileInput" accept="application/pdf" />
       <button onclick="nextPage(3)">Next</button>
     </div>
   </div>
@@ -108,8 +132,9 @@
   <div class="page" id="page4">
     <div class="box">
       <h2>✅ Conversion Complete</h2>
+      <div id="spinner"></div>
       <div id="preview"></div>
-      <button onclick="downloadPDF()">Download PDF</button>
+      <div id="output"></div>
       <button onclick="nextPage(5)">Logout</button>
     </div>
   </div>
@@ -150,86 +175,31 @@
       const file = document.getElementById('fileInput').files[0];
       const handwriting = document.getElementById('handwritingInput').files[0];
       const preview = document.getElementById('preview');
+      const spinner = document.getElementById('spinner');
+      const output = document.getElementById('output');
 
       if (!file || !handwriting) {
-        alert("Please select both a file and handwriting image.");
+        alert("Please select both a PDF and handwriting image.");
         return;
       }
 
       nextPage(4);
-      preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
-    }
-
-    function downloadPDF() {
-      alert("📝 Final PDF download will be available once backend is connected.");
-    }
-  </script>
-</body>
-</html>      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #spinner {
-      display: none;
-      margin: 20px auto;
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #007bff;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    #output {
-      margin-top: 20px;
-      font-style: italic;
-      color: #444;
-      opacity: 0;
-      transition: opacity 1s ease-in;
-    }
-    #output.show {
-      opacity: 1;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Upload PDF & Handwriting Image</h2>
-    <form id="uploadForm" action="https://pdf-handwriting-converter.onrender.com/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="pdf" accept="application/pdf" required />
-      <input type="file" name="handwriting" accept="image/*" required />
-      <button type="submit">Upload & Convert</button>
-    </form>
-
-    <div id="spinner"></div>
-    <div id="output"></div>
-  </div>
-
-  <script>
-    const form = document.getElementById('uploadForm');
-    const spinner = document.getElementById('spinner');
-    const output = document.getElementById('output');
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-
       spinner.style.display = 'block';
       output.classList.remove('show');
       output.textContent = '';
 
-      const formData = new FormData(form);
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('handwriting', handwriting);
 
-      fetch(form.action, {
+      fetch('https://pdf-handwriting-converter.onrender.com/upload', {
         method: 'POST',
         body: formData
       })
       .then(response => response.blob())
       .then(blob => {
         spinner.style.display = 'none';
+        preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
         output.textContent = '✅ PDF converted successfully to handwriting-style output.';
         output.classList.add('show');
 
@@ -246,7 +216,7 @@
         output.textContent = '❌ Conversion failed. Please try again.';
         output.classList.add('show');
       });
-    });
+    }
   </script>
 </body>
   </html>
