@@ -83,6 +83,7 @@ app.post('/upload', multiUpload, async (req, res) => {
 
 app.get('/healthz', (req, res) => res.sendStatus(200));
 
-app.listen(10000, '0.0.0.0', () => {
-  console.log('🚀 Server is live on port 10000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is live on port ${PORT}`);
 });
