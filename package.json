@@ -1,11 +1,12 @@
+
 {
   "name": "pdf-handwriting-converter",
   "version": "1.0.0",
   "description": "Convert PDF text into handwritten-style output using character images",
-  "main": "server.js",
+  "main": "mlserver.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node mlserver.js",
+    "dev": "nodemon mlserver.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -15,7 +16,7 @@
     "sharp": "^0.32.5",
     "cors": "^2.8.5",
     "axios": "^1.4.0",
-    "uuid":"9.0.0"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
