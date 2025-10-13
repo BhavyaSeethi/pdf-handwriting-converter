@@ -196,20 +196,25 @@
         method: 'POST',
         body: formData
       })
-      .then(response => response.blob())
-      .then(blob => {
+      .then(response => response.json())
+      .then(data => {
         spinner.style.display = 'none';
-        preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
-        output.textContent = '✅ PDF converted successfully to handwriting-style output.';
-        output.classList.add('show');
+        if (data.success && data.downloadUrl) {
+          preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
+          output.textContent = '✅ PDF converted successfully to handwriting-style output.';
+          output.classList.add('show');
 
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'handwritten.pdf';
-        link.textContent = '📥 Download Handwritten PDF';
-        link.style.display = 'block';
-        link.style.marginTop = '10px';
-        output.appendChild(link);
+          const link = document.createElement('a');
+          link.href = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
+          link.download = 'handwritten.pdf';
+          link.textContent = '📥 Download Handwritten PDF';
+          link.style.display = 'block';
+          link.style.marginTop = '10px';
+          output.appendChild(link);
+        } else {
+          output.textContent = '❌ Conversion failed. Please try again.';
+          output.classList.add('show');
+        }
       })
       .catch(error => {
         spinner.style.display = 'none';
