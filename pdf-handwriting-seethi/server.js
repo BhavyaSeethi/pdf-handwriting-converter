@@ -6,6 +6,7 @@ const pdfParse = require('pdf-parse');
 const { PDFDocument } = require('pdf-lib');
 const sharp = require('sharp');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(cors());
@@ -25,19 +26,29 @@ app.post('/upload', multiUpload, async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing file or handwriting image' });
   }
 
+  const userId = uuidv4();
+  const userDir = path.join(__dirname, 'user_handwriting', userId);
+  fs.mkdirSync(userDir, { recursive: true });
+
   try {
+    // Simulate character extraction from handwriting image
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
+    for (const char of chars) {
+      const charPath = path.join(userDir, `${char}.png`);
+      await sharp(handwritingImage.path).extract({ left: 0, top: 0, width: 30, height: 40 }) // placeholder crop
+        .resize(30, 40)
+        .toFile(charPath);
+    }
+
     const dataBuffer = fs.readFileSync(pdfFile.path);
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text || '';
 
     const charImages = {};
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
-    const handwritingDir = path.join(__dirname, 'handwriting');
-
     for (const char of chars) {
-      const imgPath = path.join(handwritingDir, `${char}.png`);
+      const imgPath = path.join(userDir, `${char}.png`);
       if (fs.existsSync(imgPath)) {
-        const buffer = await sharp(imgPath).resize(30, 40).png().toBuffer();
+        const buffer = await sharp(imgPath).png().toBuffer();
         charImages[char] = buffer;
       } else {
         console.log(`Missing image for: ${char}`);
@@ -88,6 +99,7 @@ app.post('/upload', multiUpload, async (req, res) => {
 
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
+    fs.rmSync(userDir, { recursive: true, force: true }); // cleanup user handwriting
   } catch (err) {
     console.error('❌ Processing error:', err);
     res.status(500).json({ success: false, error: 'Error processing PDF' });
