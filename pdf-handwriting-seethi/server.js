@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const pdfParse = require('pdf-parse');
 const { PDFDocument } = require('pdf-lib');
 const sharp = require('sharp');
@@ -26,7 +27,7 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 
   try {
-    const dataBuffer = fs.readFileSync(pdfFile.path);
+    const dataBuffer = await fsPromises.readFile(pdfFile.path);
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text || '';
 
@@ -40,7 +41,7 @@ app.post('/upload', multiUpload, async (req, res) => {
         const buffer = await sharp(imgPath).resize(30, 40).png().toBuffer();
         charImages[char] = buffer;
       } else {
-        console.log(`Missing image for: ${char}`);
+        console.warn(`⚠️ Missing image for character: "${char}"`);
       }
     }
 
@@ -76,16 +77,22 @@ app.post('/upload', multiUpload, async (req, res) => {
     }
 
     const finalPdfBuffer = await pdfDoc.save();
-    const outputPath = path.join(__dirname, 'public', 'handwritten.pdf');
-    fs.writeFileSync(outputPath, finalPdfBuffer);
+    const outputDir = path.join(__dirname, 'public');
+    const outputPath = path.join(outputDir, 'handwritten.pdf');
+
+    if (!fs.existsSync(outputDir)) {
+      await fsPromises.mkdir(outputDir);
+    }
+
+    await fsPromises.writeFile(outputPath, finalPdfBuffer);
 
     res.status(200).json({
       success: true,
       downloadUrl: '/handwritten.pdf'
     });
 
-    fs.unlink(pdfFile.path, () => {});
-    fs.unlink(handwritingImage.path, () => {});
+    fsPromises.unlink(pdfFile.path).catch(() => {});
+    fsPromises.unlink(handwritingImage.path).catch(() => {});
   } catch (err) {
     console.error('❌ Processing error:', err.message);
     res.status(500).json({ success: false, error: 'Conversion failed. Please try again.' });
