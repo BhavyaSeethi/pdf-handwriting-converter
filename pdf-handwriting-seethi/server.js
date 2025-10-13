@@ -87,8 +87,8 @@ app.post('/upload', multiUpload, async (req, res) => {
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
   } catch (err) {
-    console.error('❌ Processing error:', err);
-    res.status(500).json({ success: false, error: 'Error processing PDF' });
+    console.error('❌ Processing error:', err.message);
+    res.status(500).json({ success: false, error: 'Conversion failed. Please try again.' });
   }
 });
 
