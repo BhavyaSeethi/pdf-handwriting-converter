@@ -14,12 +14,12 @@ app.use(express.static('public'));
 
 const upload = multer({ dest: 'uploads/' });
 const multiUpload = upload.fields([
-  { name: 'file', maxCount: 1 },
+  { name: 'pdf', maxCount: 1 },
   { name: 'handwriting', maxCount: 1 }
 ]);
 
 app.post('/upload', multiUpload, async (req, res) => {
-  const pdfFile = req.files?.file?.[0] || req.files?.pdf?.[0];
+  const pdfFile = req.files?.pdf?.[0];
   const handwritingImage = req.files?.handwriting?.[0];
 
   if (!pdfFile || !handwritingImage) {
@@ -76,7 +76,6 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    const finalPdfBuffer = await pdfDoc.save();
     const outputDir = path.join(__dirname, 'public');
     const outputPath = path.join(outputDir, 'handwritten.pdf');
 
@@ -84,6 +83,7 @@ app.post('/upload', multiUpload, async (req, res) => {
       await fsPromises.mkdir(outputDir);
     }
 
+    const finalPdfBuffer = await pdfDoc.save();
     await fsPromises.writeFile(outputPath, finalPdfBuffer);
 
     res.status(200).json({
