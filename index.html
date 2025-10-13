@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,6 +65,7 @@
       max-width: 100%;
       border: 1px solid #ccc;
       border-radius: 6px;
+      display: none;
     }
     #spinner {
       display: none;
@@ -81,13 +81,18 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    #downloadArea {
+    #downloadLink {
+      display: none;
       margin-top: 20px;
+      font-weight: bold;
+      color: #007bff;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
 
+  <!-- Page 1: Login -->
   <div class="page active" id="page1">
     <div class="box">
       <h2>🔐 Login Page</h2>
@@ -96,6 +101,7 @@
     </div>
   </div>
 
+  <!-- Page 2: Choose PDF -->
   <div class="page" id="page2">
     <div class="box">
       <h2>📁 Choose a PDF File</h2>
@@ -104,25 +110,27 @@
     </div>
   </div>
 
+  <!-- Page 3: Choose Handwriting Image -->
   <div class="page" id="page3">
     <div class="box">
       <h2>🖋️ Choose Handwriting Image</h2>
       <label for="handwritingInput">📷 Take a photo or choose handwriting image</label>
       <input type="file" id="handwritingInput" accept="image/*" capture="environment" />
-      <img id="imagePreview" src="" alt="Preview" style="display:none;" />
+      <img id="imagePreview" src="" alt="Preview" />
       <button onclick="startConversion()">Convert</button>
     </div>
   </div>
 
+  <!-- Page 4: Conversion -->
   <div class="page" id="page4">
     <div class="box">
-      <h2>✅ Conversion Complete</h2>
       <div id="spinner"></div>
-      <div id="downloadArea"></div>
+      <a id="downloadLink" href="#" download="handwritten.pdf">📥 Download Handwritten PDF</a>
       <button onclick="nextPage(5)">Logout</button>
     </div>
   </div>
 
+  <!-- Page 5: Logout -->
   <div class="page" id="page5">
     <div class="box">
       <h2>👋 Logged Out</h2>
@@ -134,6 +142,7 @@
     function nextPage(n) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page' + n).classList.add('active');
+
       if (n === 5) {
         const name = document.getElementById('username').value || 'User';
         document.getElementById('userDisplay').textContent = name;
@@ -157,7 +166,7 @@
       const file = document.getElementById('fileInput').files[0];
       const handwriting = document.getElementById('handwritingInput').files[0];
       const spinner = document.getElementById('spinner');
-      const downloadArea = document.getElementById('downloadArea');
+      const link = document.getElementById('downloadLink');
 
       if (!file || !handwriting) {
         alert("Please select both a PDF and handwriting image.");
@@ -166,7 +175,7 @@
 
       nextPage(4);
       spinner.style.display = 'block';
-      downloadArea.innerHTML = '';
+      link.style.display = 'none';
 
       const formData = new FormData();
       formData.append('pdf', file);
@@ -176,28 +185,20 @@
         method: 'POST',
         body: formData
       })
-      .then(response => response.json())
-      .then(data => {
+      .then(response => {
+        if (!response.ok) throw new Error('Conversion failed');
+        return response.blob();
+      })
+      .then(blob => {
         spinner.style.display = 'none';
-        if (data.success && data.downloadUrl) {
-          const fullUrl = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
-          const link = document.createElement('a');
-          link.href = fullUrl;
-          link.download = 'handwritten.pdf';
-          link.textContent = '📥 Download Handwritten PDF';
-          link.style.display = 'block';
-          link.style.marginTop = '10px';
-          link.style.fontWeight = 'bold';
-          link.style.color = '#007bff';
-          link.style.textDecoration = 'underline';
-          link.target = '_blank';
-          downloadArea.appendChild(link);
-        }
+        link.href = URL.createObjectURL(blob);
+        link.style.display = 'block';
       })
       .catch(() => {
         spinner.style.display = 'none';
+        // No error message shown
       });
     }
   </script>
 </body>
-    </html>
+</html>
