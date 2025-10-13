@@ -3,8 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const fsPromises = fs.promises;
-const pdfParse = require('pdf-parse');
 const { PDFDocument } = require('pdf-lib');
+const pdfjsLib = require('pdfjs-dist');
 const sharp = require('sharp');
 const cors = require('cors');
 
@@ -27,58 +27,49 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 
   try {
-    const dataBuffer = await fsPromises.readFile(pdfFile.path);
-    const pdfData = await pdfParse(dataBuffer);
-    const extractedText = pdfData.text || '';
-
+    const handwritingDir = path.join(__dirname, 'handwriting');
     const charImages = {};
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
-    const handwritingDir = path.join(__dirname, 'handwriting');
-
     for (const char of chars) {
       const imgPath = path.join(handwritingDir, `${char}.png`);
       if (fs.existsSync(imgPath)) {
         const buffer = await sharp(imgPath).resize(30, 40).png().toBuffer();
         charImages[char] = buffer;
-      } else {
-        console.warn(`⚠️ Missing image for character: "${char}"`);
       }
     }
 
+    const data = new Uint8Array(await fsPromises.readFile(pdfFile.path));
+    const pdf = await pdfjsLib.getDocument({ data }).promise;
     const pdfDoc = await PDFDocument.create();
-    let page = pdfDoc.addPage([595, 842]);
-    let x = 50, y = 750;
 
-    for (const char of extractedText) {
-      if (char === '\n') {
-        y -= 50;
-        x = 50;
-        continue;
-      }
+    for (let pageIndex = 0; pageIndex < pdf.numPages; pageIndex++) {
+      const page = await pdf.getPage(pageIndex + 1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const textContent = await page.getTextContent();
+      const newPage = pdfDoc.addPage([viewport.width, viewport.height]);
 
-      const imgBuffer = charImages[char];
-      if (imgBuffer) {
-        const img = await pdfDoc.embedPng(imgBuffer);
-        page.drawImage(img, { x, y, width: 30, height: 40 });
-        x += 35;
-        if (x > 500) {
-          y -= 50;
-          x = 50;
+      for (const item of textContent.items) {
+        const str = item.str;
+        const x = item.transform[4];
+        const y = viewport.height - item.transform[5]; // Flip Y-axis
+
+        for (const char of str) {
+          const imgBuffer = charImages[char];
+          if (imgBuffer) {
+            const img = await pdfDoc.embedPng(imgBuffer);
+            newPage.drawImage(img, {
+              x,
+              y,
+              width: 30,
+              height: 40
+            });
+          }
         }
-      } else {
-        x += 20;
-      }
-
-      if (y < 50) {
-        page = pdfDoc.addPage([595, 842]);
-        y = 750;
-        x = 50;
       }
     }
 
     const outputDir = path.join(__dirname, 'public');
     const outputPath = path.join(outputDir, 'handwritten.pdf');
-
     await fsPromises.mkdir(outputDir, { recursive: true });
     const finalPdfBuffer = await pdfDoc.save();
     await fsPromises.writeFile(outputPath, finalPdfBuffer);
@@ -91,7 +82,7 @@ app.post('/upload', multiUpload, async (req, res) => {
     fsPromises.unlink(pdfFile.path).catch(() => {});
     fsPromises.unlink(handwritingImage.path).catch(() => {});
   } catch (err) {
-    console.error('❌ Processing error:', err.message);
+    console.error('❌ Error:', err.message);
     res.status(500).json({ success: false, error: 'Conversion failed. Please try again.' });
   }
 });
@@ -100,5 +91,5 @@ app.get('/healthz', (req, res) => res.sendStatus(200));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server is live on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
