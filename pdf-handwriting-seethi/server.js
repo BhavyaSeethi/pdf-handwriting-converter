@@ -31,11 +31,12 @@ app.post('/upload', multiUpload, async (req, res) => {
   fs.mkdirSync(userDir, { recursive: true });
 
   try {
-    // Simulate character extraction from handwriting image
+    // Simulated character extraction — replace with real segmentation later
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
     for (const char of chars) {
       const charPath = path.join(userDir, `${char}.png`);
-      await sharp(handwritingImage.path).extract({ left: 0, top: 0, width: 30, height: 40 }) // placeholder crop
+      await sharp(handwritingImage.path)
+        .extract({ left: 0, top: 0, width: 30, height: 40 }) // placeholder crop
         .resize(30, 40)
         .toFile(charPath);
     }
@@ -50,8 +51,6 @@ app.post('/upload', multiUpload, async (req, res) => {
       if (fs.existsSync(imgPath)) {
         const buffer = await sharp(imgPath).png().toBuffer();
         charImages[char] = buffer;
-      } else {
-        console.log(`Missing image for: ${char}`);
       }
     }
 
@@ -94,24 +93,15 @@ app.post('/upload', multiUpload, async (req, res) => {
     res.status(200).json({
       success: true,
       downloadUrl: `/${outputFilename}`,
-      previewUrl: `/preview/${outputFilename}`
+      previewUrl: `/${outputFilename}` // same link for viewing
     });
 
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
-    fs.rmSync(userDir, { recursive: true, force: true }); // cleanup user handwriting
+    fs.rmSync(userDir, { recursive: true, force: true });
   } catch (err) {
     console.error('❌ Processing error:', err);
     res.status(500).json({ success: false, error: 'Error processing PDF' });
-  }
-});
-
-app.get('/preview/:filename', (req, res) => {
-  const previewPath = path.join(__dirname, 'public', req.params.filename);
-  if (fs.existsSync(previewPath)) {
-    res.sendFile(previewPath);
-  } else {
-    res.status(404).send('Preview file not found');
   }
 });
 
