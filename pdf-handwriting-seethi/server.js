@@ -5,18 +5,20 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const { PDFDocument } = require('pdf-lib');
 const sharp = require('sharp');
+const cors = require('cors'); // ✅ NEW: Allow frontend from other domains
 
 const app = express();
+app.use(cors()); // ✅ Enable cross-origin requests
+app.use(express.static('public')); // Serve static files
+
 const upload = multer({ dest: 'uploads/' });
 const multiUpload = upload.fields([
   { name: 'file', maxCount: 1 },
   { name: 'handwriting', maxCount: 1 }
 ]);
 
-app.use(express.static('public')); // Serve static files
-
 app.post('/upload', multiUpload, async (req, res) => {
-  const pdfFile = req.files?.file?.[0];
+  const pdfFile = req.files?.file?.[0] || req.files?.pdf?.[0]; // ✅ Accept 'file' or 'pdf'
   const handwritingImage = req.files?.handwriting?.[0];
 
   if (!pdfFile || !handwritingImage) {
