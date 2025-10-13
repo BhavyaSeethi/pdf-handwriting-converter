@@ -76,12 +76,14 @@ app.post('/upload', multiUpload, async (req, res) => {
     }
 
     const finalPdfBuffer = await pdfDoc.save();
-    const outputPath = path.join(__dirname, 'public', 'handwritten.pdf');
+    const outputFilename = `handwritten_${Date.now()}.pdf`;
+    const outputPath = path.join(__dirname, 'public', outputFilename);
     fs.writeFileSync(outputPath, finalPdfBuffer);
 
     res.status(200).json({
       success: true,
-      downloadUrl: '/handwritten.pdf'
+      downloadUrl: `/${outputFilename}`,
+      previewUrl: `/preview/${outputFilename}`
     });
 
     fs.unlink(pdfFile.path, () => {});
@@ -92,6 +94,17 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 });
 
+// Preview route to open the file in browser
+app.get('/preview/:filename', (req, res) => {
+  const previewPath = path.join(__dirname, 'public', req.params.filename);
+  if (fs.existsSync(previewPath)) {
+    res.sendFile(previewPath);
+  } else {
+    res.status(404).send('Preview file not found');
+  }
+});
+
+// Health check
 app.get('/healthz', (req, res) => res.sendStatus(200));
 
 const PORT = process.env.PORT || 3000;
