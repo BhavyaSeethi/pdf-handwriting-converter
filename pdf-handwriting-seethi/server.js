@@ -94,7 +94,6 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 });
 
-// Preview route to open the file in browser
 app.get('/preview/:filename', (req, res) => {
   const previewPath = path.join(__dirname, 'public', req.params.filename);
   if (fs.existsSync(previewPath)) {
@@ -104,7 +103,6 @@ app.get('/preview/:filename', (req, res) => {
   }
 });
 
-// Health check
 app.get('/healthz', (req, res) => res.sendStatus(200));
 
 const PORT = process.env.PORT || 3000;
