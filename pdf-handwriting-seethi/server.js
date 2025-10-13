@@ -27,7 +27,6 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 
   try {
-    // Auto-split handwriting image into characters
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const charWidth = 40;
     const charHeight = 50;
@@ -51,7 +50,6 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    // Read original PDF and extract layout-aware text
     const data = new Uint8Array(await fsPromises.readFile(pdfFile.path));
     const pdf = await pdfjsLib.getDocument({ data }).promise;
     const pdfDoc = await PDFDocument.create();
@@ -65,7 +63,7 @@ app.post('/upload', multiUpload, async (req, res) => {
       for (const item of textContent.items) {
         const str = item.str;
         const x = item.transform[4];
-        const y = viewport.height - item.transform[5]; // Flip Y-axis
+        const y = viewport.height - item.transform[5];
 
         let offsetX = x;
         for (const char of str) {
@@ -86,7 +84,6 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    // Save final PDF
     const outputDir = path.join(__dirname, 'public');
     const outputPath = path.join(outputDir, 'handwritten.pdf');
     await fsPromises.mkdir(outputDir, { recursive: true });
@@ -95,7 +92,7 @@ app.post('/upload', multiUpload, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      downloadUrl: '/handwritten.pdf'
+      downloadUrl: `${req.protocol}://${req.get('host')}/handwritten.pdf`
     });
 
     fsPromises.unlink(pdfFile.path).catch(() => {});
