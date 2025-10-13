@@ -83,6 +83,12 @@
     #downloadArea {
       margin-top: 20px;
     }
+    a.download-link {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -183,25 +189,34 @@
       .then(response => response.json())
       .then(data => {
         spinner.style.display = 'none';
-        if (data.success && data.downloadUrl) {
-          const fullUrl = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
-          const link = document.createElement('a');
-          link.href = fullUrl;
-          link.download = 'handwritten.pdf';
-          link.textContent = '📥 Download Handwritten PDF';
-          link.style.display = 'block';
-          link.style.marginTop = '10px';
-          link.style.fontWeight = 'bold';
-          link.style.color = '#007bff';
-          link.style.textDecoration = 'underline';
-          link.target = '_blank';
-          downloadArea.appendChild(link);
+        if (data.success && data.downloadUrl && data.previewUrl) {
+          const baseUrl = 'https://pdf-handwriting-converter.onrender.com';
+
+          const downloadLink = document.createElement('a');
+          downloadLink.href = baseUrl + data.downloadUrl;
+          downloadLink.download = 'handwritten.pdf';
+          downloadLink.textContent = '📥 Download Handwritten PDF';
+          downloadLink.className = 'download-link';
+          downloadLink.style.color = '#007bff';
+
+          const previewLink = document.createElement('a');
+          previewLink.href = baseUrl + data.previewUrl;
+          previewLink.textContent = '👁️ Preview Handwritten PDF';
+          previewLink.className = 'download-link';
+          previewLink.style.color = '#28a745';
+          previewLink.target = '_blank';
+
+          downloadArea.appendChild(downloadLink);
+          downloadArea.appendChild(previewLink);
+        } else {
+          alert('Conversion failed: ' + data.error);
         }
       })
       .catch(() => {
         spinner.style.display = 'none';
+        alert('Something went wrong during conversion.');
       });
     }
   </script>
 </body>
-        </html>
+      </html>
