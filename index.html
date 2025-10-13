@@ -83,17 +83,10 @@
     #downloadArea {
       margin-top: 20px;
     }
-    a.download-link {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Page 1: Login -->
   <div class="page active" id="page1">
     <div class="box">
       <h2>🔐 Login Page</h2>
@@ -102,7 +95,6 @@
     </div>
   </div>
 
-  <!-- Page 2: Choose PDF -->
   <div class="page" id="page2">
     <div class="box">
       <h2>📁 Choose a PDF File</h2>
@@ -111,7 +103,6 @@
     </div>
   </div>
 
-  <!-- Page 3: Choose Handwriting Image -->
   <div class="page" id="page3">
     <div class="box">
       <h2>🖋️ Choose Handwriting Image</h2>
@@ -122,7 +113,6 @@
     </div>
   </div>
 
-  <!-- Page 4: Conversion -->
   <div class="page" id="page4">
     <div class="box">
       <h2>✅ Conversion Complete</h2>
@@ -132,7 +122,6 @@
     </div>
   </div>
 
-  <!-- Page 5: Logout -->
   <div class="page" id="page5">
     <div class="box">
       <h2>👋 Logged Out</h2>
@@ -189,31 +178,28 @@
       .then(response => response.json())
       .then(data => {
         spinner.style.display = 'none';
-        if (data.success && data.downloadUrl && data.previewUrl) {
-          const baseUrl = 'https://pdf-handwriting-converter.onrender.com';
-
-          const downloadLink = document.createElement('a');
-          downloadLink.href = baseUrl + data.downloadUrl;
-          downloadLink.download = 'handwritten.pdf';
-          downloadLink.textContent = '📥 Download Handwritten PDF';
-          downloadLink.className = 'download-link';
-          downloadLink.style.color = '#007bff';
-
-          const previewLink = document.createElement('a');
-          previewLink.href = baseUrl + data.previewUrl;
-          previewLink.textContent = '👁️ Preview Handwritten PDF';
-          previewLink.className = 'download-link';
-          previewLink.style.color = '#28a745';
-          previewLink.target = '_blank';
-
-          downloadArea.appendChild(downloadLink);
-          downloadArea.appendChild(previewLink);
-        } else {
-          alert('Conversion failed: ' + data.error);
+        if (data.success && data.downloadUrl) {
+          const fullUrl = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
+          const link = document.createElement('a');
+          link.href = fullUrl;
+          link.download = 'handwritten.pdf';
+          link.textContent = '📥 Download Handwritten PDF';
+          link.style.display = 'block';
+          link.style.marginTop = '10px';
+          link.style.fontWeight = 'bold';
+          link.style.color = '#007bff';
+          link.style.textDecoration = 'underline';
+          link.target = '_blank';
+          downloadArea.appendChild(link);
         }
       })
       .catch(() => {
         spinner.style.display = 'none';
+      });
+    }
+  </script>
+</body>
+</html>        spinner.style.display = 'none';
         alert('Something went wrong during conversion.');
       });
     }
