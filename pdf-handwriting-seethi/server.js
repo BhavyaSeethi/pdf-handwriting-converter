@@ -79,10 +79,7 @@ app.post('/upload', multiUpload, async (req, res) => {
     const outputDir = path.join(__dirname, 'public');
     const outputPath = path.join(outputDir, 'handwritten.pdf');
 
-    if (!fs.existsSync(outputDir)) {
-      await fsPromises.mkdir(outputDir);
-    }
-
+    await fsPromises.mkdir(outputDir, { recursive: true });
     const finalPdfBuffer = await pdfDoc.save();
     await fsPromises.writeFile(outputPath, finalPdfBuffer);
 
