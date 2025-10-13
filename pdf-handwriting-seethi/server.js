@@ -6,7 +6,6 @@ const pdfParse = require('pdf-parse');
 const { PDFDocument } = require('pdf-lib');
 const sharp = require('sharp');
 const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(cors());
@@ -26,31 +25,22 @@ app.post('/upload', multiUpload, async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing file or handwriting image' });
   }
 
-  const userId = uuidv4();
-  const userDir = path.join(__dirname, 'user_handwriting', userId);
-  fs.mkdirSync(userDir, { recursive: true });
-
   try {
-    // Simulated character extraction — replace with real segmentation later
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
-    for (const char of chars) {
-      const charPath = path.join(userDir, `${char}.png`);
-      await sharp(handwritingImage.path)
-        .extract({ left: 0, top: 0, width: 30, height: 40 }) // placeholder crop
-        .resize(30, 40)
-        .toFile(charPath);
-    }
-
     const dataBuffer = fs.readFileSync(pdfFile.path);
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text || '';
 
     const charImages = {};
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
+    const handwritingDir = path.join(__dirname, 'handwriting');
+
     for (const char of chars) {
-      const imgPath = path.join(userDir, `${char}.png`);
+      const imgPath = path.join(handwritingDir, `${char}.png`);
       if (fs.existsSync(imgPath)) {
-        const buffer = await sharp(imgPath).png().toBuffer();
+        const buffer = await sharp(imgPath).resize(30, 40).png().toBuffer();
         charImages[char] = buffer;
+      } else {
+        console.log(`Missing image for: ${char}`);
       }
     }
 
@@ -86,19 +76,16 @@ app.post('/upload', multiUpload, async (req, res) => {
     }
 
     const finalPdfBuffer = await pdfDoc.save();
-    const outputFilename = `handwritten_${Date.now()}.pdf`;
-    const outputPath = path.join(__dirname, 'public', outputFilename);
+    const outputPath = path.join(__dirname, 'public', 'handwritten.pdf');
     fs.writeFileSync(outputPath, finalPdfBuffer);
 
     res.status(200).json({
       success: true,
-      downloadUrl: `/${outputFilename}`,
-      previewUrl: `/${outputFilename}` // same link for viewing
+      downloadUrl: '/handwritten.pdf'
     });
 
     fs.unlink(pdfFile.path, () => {});
     fs.unlink(handwritingImage.path, () => {});
-    fs.rmSync(userDir, { recursive: true, force: true });
   } catch (err) {
     console.error('❌ Processing error:', err);
     res.status(500).json({ success: false, error: 'Error processing PDF' });
