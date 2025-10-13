@@ -60,11 +60,6 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    #preview {
-      margin-top: 20px;
-      font-style: italic;
-      color: #444;
-    }
     #imagePreview {
       margin-top: 10px;
       max-width: 100%;
@@ -85,15 +80,8 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    #output {
+    #downloadArea {
       margin-top: 20px;
-      font-style: italic;
-      color: #444;
-      opacity: 0;
-      transition: opacity 1s ease-in;
-    }
-    #output.show {
-      opacity: 1;
     }
   </style>
 </head>
@@ -133,8 +121,7 @@
     <div class="box">
       <h2>✅ Conversion Complete</h2>
       <div id="spinner"></div>
-      <div id="preview"></div>
-      <div id="output"></div>
+      <div id="downloadArea"></div>
       <button onclick="nextPage(5)">Logout</button>
     </div>
   </div>
@@ -173,9 +160,8 @@
     function startConversion() {
       const file = document.getElementById('fileInput').files[0];
       const handwriting = document.getElementById('handwritingInput').files[0];
-      const preview = document.getElementById('preview');
       const spinner = document.getElementById('spinner');
-      const output = document.getElementById('output');
+      const downloadArea = document.getElementById('downloadArea');
 
       if (!file || !handwriting) {
         alert("Please select both a PDF and handwriting image.");
@@ -184,8 +170,7 @@
 
       nextPage(4);
       spinner.style.display = 'block';
-      output.classList.remove('show');
-      output.textContent = '';
+      downloadArea.innerHTML = '';
 
       const formData = new FormData();
       formData.append('pdf', file);
@@ -199,29 +184,22 @@
       .then(data => {
         spinner.style.display = 'none';
         if (data.success && data.downloadUrl) {
-          preview.textContent = `Converted "${file.name}" using "${handwriting.name}" into handwriting-style output.`;
-          output.textContent = '✅ PDF converted successfully to handwriting-style output.';
-          output.classList.add('show');
-
           const fullUrl = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
-
           const link = document.createElement('a');
           link.href = fullUrl;
           link.download = 'handwritten.pdf';
           link.textContent = '📥 Download Handwritten PDF';
           link.style.display = 'block';
           link.style.marginTop = '10px';
-          link.target = '_blank'; // ✅ opens in new tab
-          output.appendChild(link);
-        } else {
-          output.textContent = '❌ Conversion failed. Please try again.';
-          output.classList.add('show');
+          link.style.fontWeight = 'bold';
+          link.style.color = '#007bff';
+          link.style.textDecoration = 'underline';
+          link.target = '_blank';
+          downloadArea.appendChild(link);
         }
       })
-      .catch(error => {
+      .catch(() => {
         spinner.style.display = 'none';
-        output.textContent = '❌ Conversion failed. Please try again.';
-        output.classList.add('show');
       });
     }
   </script>
