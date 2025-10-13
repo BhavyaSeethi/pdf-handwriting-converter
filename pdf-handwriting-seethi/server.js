@@ -8,8 +8,8 @@ const sharp = require('sharp');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); // Allow frontend from other domains
-app.use(express.static('public')); // Serve static files like handwritten.pdf
+app.use(cors());
+app.use(express.static('public'));
 
 const upload = multer({ dest: 'uploads/' });
 const multiUpload = upload.fields([
@@ -30,7 +30,6 @@ app.post('/upload', multiUpload, async (req, res) => {
     const pdfData = await pdfParse(dataBuffer);
     const extractedText = pdfData.text || '';
 
-    // Load handwriting images
     const charImages = {};
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
     const handwritingDir = path.join(__dirname, 'handwriting');
@@ -45,9 +44,8 @@ app.post('/upload', multiUpload, async (req, res) => {
       }
     }
 
-    // Create PDF
     const pdfDoc = await PDFDocument.create();
-    let page = pdfDoc.addPage([595, 842]); // A4 size
+    let page = pdfDoc.addPage([595, 842]);
     let x = 50, y = 750;
 
     for (const char of extractedText) {
@@ -67,7 +65,7 @@ app.post('/upload', multiUpload, async (req, res) => {
           x = 50;
         }
       } else {
-        x += 20; // fallback spacing
+        x += 20;
       }
 
       if (y < 50) {
