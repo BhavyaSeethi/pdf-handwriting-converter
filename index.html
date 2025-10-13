@@ -151,7 +151,6 @@
     function nextPage(n) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page' + n).classList.add('active');
-
       if (n === 5) {
         const name = document.getElementById('username').value || 'User';
         document.getElementById('userDisplay').textContent = name;
@@ -204,12 +203,15 @@
           output.textContent = '✅ PDF converted successfully to handwriting-style output.';
           output.classList.add('show');
 
+          const fullUrl = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
+
           const link = document.createElement('a');
-          link.href = 'https://pdf-handwriting-converter.onrender.com' + data.downloadUrl;
+          link.href = fullUrl;
           link.download = 'handwritten.pdf';
           link.textContent = '📥 Download Handwritten PDF';
           link.style.display = 'block';
           link.style.marginTop = '10px';
+          link.target = '_blank'; // ✅ opens in new tab
           output.appendChild(link);
         } else {
           output.textContent = '❌ Conversion failed. Please try again.';
