@@ -27,17 +27,31 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 
   try {
-    const handwritingDir = path.join(__dirname, 'handwriting');
+    // Auto-split handwriting image into characters
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charWidth = 40;
+    const charHeight = 50;
     const charImages = {};
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!? ';
-    for (const char of chars) {
-      const imgPath = path.join(handwritingDir, `${char}.png`);
-      if (fs.existsSync(imgPath)) {
-        const buffer = await sharp(imgPath).resize(30, 40).png().toBuffer();
-        charImages[char] = buffer;
+
+    for (let i = 0; i < chars.length; i++) {
+      const row = i < 26 ? 0 : i < 52 ? 1 : 2;
+      const col = i % 26;
+      const left = col * charWidth;
+      const top = row * charHeight;
+
+      try {
+        const buffer = await sharp(handwritingImage.path)
+          .extract({ left, top, width: charWidth, height: charHeight })
+          .resize(30, 40)
+          .png()
+          .toBuffer();
+        charImages[chars[i]] = buffer;
+      } catch {
+        console.warn(`⚠️ Could not extract character: "${chars[i]}"`);
       }
     }
 
+    // Read original PDF and extract layout-aware text
     const data = new Uint8Array(await fsPromises.readFile(pdfFile.path));
     const pdf = await pdfjsLib.getDocument({ data }).promise;
     const pdfDoc = await PDFDocument.create();
@@ -53,21 +67,26 @@ app.post('/upload', multiUpload, async (req, res) => {
         const x = item.transform[4];
         const y = viewport.height - item.transform[5]; // Flip Y-axis
 
+        let offsetX = x;
         for (const char of str) {
           const imgBuffer = charImages[char];
           if (imgBuffer) {
             const img = await pdfDoc.embedPng(imgBuffer);
             newPage.drawImage(img, {
-              x,
+              x: offsetX,
               y,
               width: 30,
               height: 40
             });
+            offsetX += 32;
+          } else {
+            offsetX += 20;
           }
         }
       }
     }
 
+    // Save final PDF
     const outputDir = path.join(__dirname, 'public');
     const outputPath = path.join(outputDir, 'handwritten.pdf');
     await fsPromises.mkdir(outputDir, { recursive: true });
