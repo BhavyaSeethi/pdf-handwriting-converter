@@ -181,7 +181,7 @@
       formData.append('pdf', file);
       formData.append('handwriting', handwriting);
 
-      fetch('/upload', {
+      fetch('https://pdf-handwriting-backend.onrender.com', {
         method: 'POST',
         body: formData
       })
