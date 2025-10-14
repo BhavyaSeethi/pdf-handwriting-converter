@@ -181,24 +181,25 @@
       formData.append('pdf', file);
       formData.append('handwriting', handwriting);
 
-      fetch('https://pdf-handwriting-converter.onrender.com/upload', {
+      fetch('/upload', {
         method: 'POST',
         body: formData
       })
-      .then(response => {
-        if (!response.ok) throw new Error('Conversion failed');
-        return response.blob();
-      })
-      .then(blob => {
+      .then(response => response.json())
+      .then(data => {
         spinner.style.display = 'none';
-        link.href = URL.createObjectURL(blob);
-        link.style.display = 'block';
+        if (data.success && data.downloadUrl) {
+          link.href = data.downloadUrl;
+          link.style.display = 'block';
+        } else {
+          alert("Conversion failed. Please try again.");
+        }
       })
       .catch(() => {
         spinner.style.display = 'none';
-        // No error message shown
+        alert("Server error. Please try again later.");
       });
     }
   </script>
 </body>
-</html>
+  </html>
