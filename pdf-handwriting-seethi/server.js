@@ -10,7 +10,7 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.static('public'));
+app.use(express.static('public')); // Serve static files from 'public' folder
 
 const upload = multer({ dest: 'uploads/' });
 const multiUpload = upload.fields([
@@ -103,6 +103,12 @@ app.post('/upload', multiUpload, async (req, res) => {
   }
 });
 
+// ✅ Root route to prevent "Cannot GET /"
+app.get('/', (req, res) => {
+  res.send('📝 PDF to Handwriting Converter is running!');
+});
+
+// Health check route
 app.get('/healthz', (req, res) => res.sendStatus(200));
 
 const PORT = process.env.PORT || 3000;
